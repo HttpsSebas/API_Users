@@ -9,6 +9,8 @@ export default async function addUser({ name, email, password }) {
       name: name,
       email: email,
       password: hashedPassword,
+      deleted: false,
+      orders: [],
     },
   });
   return user;
