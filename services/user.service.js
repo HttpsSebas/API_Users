@@ -4,16 +4,29 @@ import bcrypt from "bcrypt";
 export default async function addUser({ name, email, password }) {
   const hashedPassword = bcrypt.hashSync(password, 10);
 
+  const isRegistered = await getUserByEmail({ email });
+
+  if (isRegistered) {
+    throw new Error("User already exists");
+  }
+
   const user = await prisma.user.create({
     data: {
       name: name,
       email: email,
       password: hashedPassword,
       deleted: false,
-      orders: [],
     },
   });
   return user;
+}
+
+export async function getUserByEmail({ email }) {
+  const isRegistered = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  return isRegistered
 }
 
 export async function getUser({ id }) {

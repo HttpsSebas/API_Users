@@ -20,6 +20,7 @@ model Order {
   id            Int      @id @default(autoincrement())
   createdAt     DateTime @default(now())
   userId        Int
+  total         Float
   status        String   @default("pending")
   user          User     @relation(fields: [userId], references: [id])
   items         OrderItem[]
