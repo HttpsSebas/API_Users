@@ -6,14 +6,14 @@ export default async function createOrder({ userId, items }) {
     throw new Error("Order must have at least one item");
   }
 
-  const user = getUser({ id: userId });
+  const user = await getUser({ id: userId });
 
   if (!user) {
     throw new Error("User doesn't exists");
   }
 
   const total = items.reduce((acum, item) => {
-    acum + item.price * item.quantity;
+    return acum + item.price * item.quantity;
   }, 0);
 
   const order = await prisma.$transaction(async (tx) => {
@@ -39,4 +39,51 @@ export default async function createOrder({ userId, items }) {
     return newOrder;
   });
   return order;
+}
+
+export async function getOrders({
+  userId,
+  from = null,
+  to = null,
+  limit = 10,
+}) {
+  const where = {
+    userId: userId,
+  };
+
+  if (from || to) {
+    where.createdAt = {};
+  }
+
+  if (from) {
+    where.createdAt.gte = from;
+  }
+
+  if (to) {
+    where.createdAt.lte = to;
+  }
+
+  const orders = await prisma.order.findMany({
+    where,
+    take: limit,
+  });
+
+  if (!orders) {
+    throw new Error("Orders not found");
+  }
+
+  return orders;
+}
+
+export async function updateOrderStatus({id, status}) {
+  const orderStatus = await prisma.order.update({
+    where: {
+      id: id
+    },
+    data: {
+      status: status
+    }
+  })
+
+  return orderStatus
 }

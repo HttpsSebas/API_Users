@@ -15,7 +15,15 @@ export default async function addUser({ name, email, password }) {
       name: name,
       email: email,
       password: hashedPassword,
+      refreshToken: refreshToken,
       deleted: false,
+      sessions: {
+        create: {
+          userId: user.id,
+          token: refreshToken,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      },
     },
   });
   return user;
@@ -26,7 +34,7 @@ export async function getUserByEmail({ email }) {
     where: { email },
   });
 
-  return isRegistered
+  return isRegistered;
 }
 
 export async function getUser({ id }) {

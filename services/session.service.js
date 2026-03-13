@@ -1,20 +1,22 @@
 import addUser, { getUserByEmail } from "./user.service.js";
-import jwt from "jsonwebtoken";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../utils/generateTokens.js";
+import createRefreshToken from "../utils/createRefreshToken.js";
 import bcrypt from "bcrypt";
 
 export default async function registerUser({ name, email, password }) {
   const user = await addUser({ name, email, password });
 
-  const token = jwt.sign(
-    {
-      name,
-      email,
-    },
-    process.env.JWT_SECRET,
-    { expiresIn: "1h" },
-  );
+  const token = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-  return { token, user };
+  const cryptedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+  await createRefreshToken({ userId: user.id, token: cryptedRefreshToken });
+
+  return { token, user, refreshToken };
 }
 
 export async function loginUser({ email, password }) {
@@ -25,14 +27,16 @@ export async function loginUser({ email, password }) {
 
   const validPassword = await bcrypt.compare(password, user.password);
 
-
   if (!validPassword) {
     throw new Error("Password is incorrect");
   }
 
-  const token = jwt.sign({ email }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
-  });
+  const token = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
 
-  return { token, user };
+  const cryptedRefreshToken = await bcrypt.hash(refreshToken, 10);
+
+  await createRefreshToken({ userId: user.id, cryptedRefreshToken });
+
+  return { token, refreshToken, user };
 }

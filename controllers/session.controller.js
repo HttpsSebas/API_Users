@@ -1,10 +1,14 @@
-import { loginUser } from "../services/session.service.js";
-import registerUser from "../services/session.service.js";
+import registerUser, { loginUser } from "../services/session.service.js";
+import { getRefreshToken } from "../utils/createRefreshToken.js";
 
 export default async function registerController(req, res) {
   try {
     const { name, email, password } = req.body;
-    const { token, user } = await registerUser({ name, email, password });
+    const { token, user, refreshToken } = await registerUser({
+      name,
+      email,
+      password,
+    });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -52,11 +56,31 @@ export async function loginController(req, res) {
 
 export async function logoutController(req, res) {
   try {
-    if (!req.cookies.token) {
-      throw new Error("No token provided");
-    }
     res.clearCookie("token");
     res.status(200).json({ message: "Logout successful" });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+}
+
+export async function refreshTokenController(req, res) {
+  try {
+    const { token } = req.body;
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+
+    const newToken = await getRefreshToken({ userId: user.id, token });
+
+    if (!newToken) {
+      throw new Error("Refresh token not found");
+    }
+
+    res.cookie("token", newToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+
+    res.status(200).json({ token: newToken });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

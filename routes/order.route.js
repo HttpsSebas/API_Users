@@ -1,8 +1,14 @@
 import { Router } from "express";
-import postOrder from "../controllers/order.controller.js";
+import postOrder, {
+  getOrdersController,
+  setStatus
+} from "../controllers/order.controller.js";
+import sessionMiddleware from "../middlewares/session.middleware.js";
 
 const orderRoute = Router();
 
-orderRoute.post("/", postOrder)
+orderRoute.get("/", sessionMiddleware, getOrdersController);
+orderRoute.post("/", sessionMiddleware, postOrder);
+orderRoute.patch("/:id", sessionMiddleware, setStatus);
 
 export default orderRoute;
