@@ -75,15 +75,15 @@ export async function getOrders({
   return orders;
 }
 
-export async function updateOrderStatus({id, status}) {
+export async function updateOrderStatus({ id, status }) {
   const orderStatus = await prisma.order.update({
     where: {
-      id: id
+      id: id,
     },
     data: {
-      status: status
-    }
-  })
+      status: status,
+    },
+  });
 
-  return orderStatus
+  return orderStatus;
 }
